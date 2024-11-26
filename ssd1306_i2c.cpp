@@ -196,6 +196,9 @@ static inline int GetFontIndex(uint8_t ch) {
     else if (ch >= '0' && ch <='9') {
         return  ch - '0' + 27;
     }
+    else if (ch == '.') {
+        return 37;
+    }
     else return  0; // Not got that char so space.
 }
 
@@ -250,10 +253,11 @@ SSD1306I2C::SSD1306I2C()
     }
 }
 
-void SSD1306I2C::DisplayText(const std::string& line1, const std::string& line2)
+void SSD1306I2C::DisplayText(const std::string& line1, const std::string& line2, const std::string& line3)
 {
     memset(m_buffer, 0, BUF_LEN);
     WriteString(m_buffer, 5, 0, line1.c_str());
     WriteString(m_buffer, 5, 8, line2.c_str());
+    WriteString(m_buffer, 5, 16, line3.c_str());
     render(m_buffer, &m_frame_area);
 }

@@ -1,7 +1,9 @@
+#include <iomanip>
 #include <sstream>
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
+#include "sensor/BMP085.h"
 #include "sensor/DHT22.h"
 #include "sensor/VEML6070.h"
 #include "ssd1306_i2c.h"
@@ -16,6 +18,7 @@
 
 VEML6070 veml6070;
 DHT dht(GPIO_DHT_PIN, DHT11);
+BMP085 bmp085;
 
 int main()
 {
@@ -30,12 +33,23 @@ int main()
     gpio_pull_up(I2C_SCL);
     // For more examples of I2C use see https://github.com/raspberrypi/pico-examples/tree/master/i2c
 
+    SSD1306I2C display;
     veml6070.begin(I2C_PORT, VEML6070_4_T);
     dht.begin();
-    SSD1306I2C display;
+    if (!bmp085.begin(I2C_PORT))
+    {
+        display.DisplayText("BMP085 failed", "", "");
+        sleep_ms(5000);
+    }
+    else
+    {
+        display.DisplayText("BMP085 succeeded", "", "");
+        sleep_ms(5000);
+    }
+
 
     while (true) {
-        std::ostringstream sbuff1, sbuff2;
+        std::ostringstream sbuff1, sbuff2, sbuff3;
 
         veml6070.sleep(false);
         uint16_t uv = veml6070.readUV();
@@ -49,9 +63,15 @@ int main()
             sbuff2 << "T " << static_cast<int>(dht.readTemperature(false, false)) << " H " << static_cast<int>(dht.readHumidity(false));
         }
 
-        display.DisplayText(sbuff1.str(), sbuff2.str());
+        sbuff3 << "T " << std::setprecision(3) << bmp085.readTemperature() << " P " << bmp085.readPressure();
+
+        display.DisplayText(sbuff1.str(), sbuff2.str(), sbuff3.str());
         printf(sbuff1.str().c_str());
+        printf("\n");
         printf(sbuff2.str().c_str());
+        printf("\n");
+        printf(sbuff3.str().c_str());
+        printf("\n");
         sleep_ms(5000);
     }
 }

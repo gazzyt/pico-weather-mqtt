@@ -61,6 +61,7 @@ target_link_libraries(uvsensor
         hardware_i2c
         sensor_VEML6070
         sensor_DHT22
+        sensor_BMP085
         )
 
 pico_add_extra_outputs(uvsensor)

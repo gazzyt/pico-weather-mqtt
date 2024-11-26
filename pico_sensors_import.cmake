@@ -28,7 +28,7 @@ if (NOT PICO_SENSORS_PATH)
         endif ()
         FetchContent_Declare(
                 pico_sensors
-                GIT_REPOSITORY https://github.com/mwinters-stuff/pico-sensor-devices.git
+                GIT_REPOSITORY https://github.com/gazzyt/pico-sensor-devices.git
                 GIT_TAG master
         )
         if (NOT pico_sensors)

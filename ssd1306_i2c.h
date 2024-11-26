@@ -16,7 +16,7 @@ class SSD1306I2C
 {
 public:
     SSD1306I2C();
-    void DisplayText(const std::string& line1, const std::string& line2);
+    void DisplayText(const std::string& line1, const std::string& line2, const std::string& line3);
 
 private:
     static constexpr size_t HEIGHT = 32;
