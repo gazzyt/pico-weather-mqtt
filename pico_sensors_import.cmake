@@ -29,7 +29,7 @@ if (NOT PICO_SENSORS_PATH)
         FetchContent_Declare(
                 pico_sensors
                 GIT_REPOSITORY https://github.com/gazzyt/pico-sensor-devices.git
-                GIT_TAG master
+                GIT_TAG bmp085
         )
         if (NOT pico_sensors)
             message("Downloading Raspberry Pi Pico Sensors")
