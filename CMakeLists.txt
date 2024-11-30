@@ -15,15 +15,15 @@ if(WIN32)
 else()
     set(USERHOME $ENV{HOME})
 endif()
-set(sdkVersion 2.0.0)
-set(toolchainVersion 13_2_Rel1)
-set(picotoolVersion 2.0.0)
+set(sdkVersion 2.1.0)
+set(toolchainVersion 13_3_Rel1)
+set(picotoolVersion 2.1.0)
 set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
 if (EXISTS ${picoVscode})
     include(${picoVscode})
 endif()
 # ====================================================================================
-set(PICO_BOARD pico CACHE STRING "Board type")
+set(PICO_BOARD pico_w CACHE STRING "Board type")
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
@@ -38,7 +38,7 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(uvsensor uvsensor.cpp ssd1306_i2c.cpp )
+add_executable(uvsensor uvsensor.cpp ssd1306_i2c.cpp wifi_connection.cpp mqtt_client.cpp )
 
 pico_set_program_name(uvsensor "uvsensor")
 pico_set_program_version(uvsensor "0.1")
@@ -62,6 +62,8 @@ target_link_libraries(uvsensor
         sensor_VEML6070
         sensor_DHT22
         sensor_BMP085
+        pico_cyw43_arch_lwip_poll
+        pico_lwip_mqtt
         )
 
 pico_add_extra_outputs(uvsensor)

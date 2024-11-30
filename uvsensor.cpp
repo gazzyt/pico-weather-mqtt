@@ -3,10 +3,12 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
+#include "mqtt_client.h"
 #include "sensor/BMP085.h"
 #include "sensor/DHT22.h"
 #include "sensor/VEML6070.h"
 #include "ssd1306_i2c.h"
+#include "wifi_connection.h"
 
 // I2C defines
 // This example will use I2C0 on GPIO8 (SDA) and GPIO9 (SCL) running at 400KHz.
@@ -19,6 +21,13 @@
 VEML6070 veml6070;
 DHT dht(GPIO_DHT_PIN, DHT11);
 BMP085 bmp085;
+
+void publish_temperature(float temp)
+{
+    WifiConnection wifi;
+    MqttClient mqttClient{"rack2.mynet"};
+    mqttClient.Publish("sensors/temperature", "wibble");
+}
 
 int main()
 {
@@ -63,7 +72,8 @@ int main()
             sbuff2 << "T " << static_cast<int>(dht.readTemperature(false, false)) << " H " << static_cast<int>(dht.readHumidity(false));
         }
 
-        sbuff3 << "T " << std::setprecision(3) << bmp085.readTemperature() << " P " << bmp085.readPressure();
+        auto bmpTemp = bmp085.readTemperature();
+        sbuff3 << "T " << std::setprecision(3) << bmpTemp << " P " << bmp085.readPressure();
 
         display.DisplayText(sbuff1.str(), sbuff2.str(), sbuff3.str());
         printf(sbuff1.str().c_str());
@@ -72,6 +82,9 @@ int main()
         printf("\n");
         printf(sbuff3.str().c_str());
         printf("\n");
-        sleep_ms(5000);
+
+        publish_temperature(bmpTemp);
+
+        sleep_ms(10 * 60 * 1000);
     }
 }
