@@ -5,13 +5,7 @@
 
 MqttClient::MqttClient(std::string&& host, int port)
 :   _host{host},
-    _port{port},
-    _host_address{0},
-    _dns_lookup_done{false},
-    _mqtt_client{0},
-    _mqtt_publish_done{false},
-    _topic{},
-    _message{}
+    _port{port}
 {
 
 }
@@ -23,26 +17,22 @@ MqttClient::~MqttClient()
 
 void MqttClient::Publish(const std::string& topic, const std::string& message)
 {
-    _topic = topic;
-    _message = message;
+    MqttPublishContext publishContext{_host, _port, topic, message};
 
-    if (_host_address.addr == 0)
-    {
-        dns_lookup();
-    }
+    dns_lookup(publishContext);
 
-    auto connect_err = mqtt_connect();
+    auto connect_err = mqtt_connect(publishContext);
 
     if (connect_err == ERR_OK)
     {
-        while (!_mqtt_publish_done)
+        while (!publishContext.mqtt_publish_done)
         {
             cyw43_arch_poll();
             cyw43_arch_wait_for_work_until(make_timeout_time_ms(1000));
         }
         
         printf("Disconnect MQTT\n");
-        mqtt_disconnect(&_mqtt_client);
+        mqtt_disconnect(&publishContext.mqtt_client);
     }
     else
     {
@@ -50,12 +40,11 @@ void MqttClient::Publish(const std::string& topic, const std::string& message)
     }
 }
 
-void MqttClient::dns_lookup()
+void MqttClient::dns_lookup(MqttPublishContext& publishContext)
 {
-    _dns_lookup_done = false;
-    auto hostname = _host.c_str();
+    auto hostname = publishContext.host.c_str();
     printf("Begin DNS lookup for %s\n", hostname);
-    auto err = dns_gethostbyname(hostname, &_host_address, dns_found_callback, this);
+    auto err = dns_gethostbyname(hostname, &publishContext.host_address, dns_found_callback, &publishContext);
 
     if (err == ERR_ARG)
     {
@@ -69,7 +58,7 @@ void MqttClient::dns_lookup()
         return;
     }
 
-    while (!_dns_lookup_done)
+    while (!publishContext.dns_lookup_done)
     {
         cyw43_arch_poll();
         cyw43_arch_wait_for_work_until(make_timeout_time_ms(1000));
@@ -80,7 +69,7 @@ void MqttClient::dns_lookup()
 void MqttClient::dns_found_callback(const char *name, const ip_addr_t *ipaddr, void *callback_arg)
 {
     assert(callback_arg != nullptr);
-    MqttClient* mqttClient = reinterpret_cast<MqttClient*>(callback_arg);
+    MqttPublishContext* publishContext = reinterpret_cast<MqttPublishContext*>(callback_arg);
 
     if (ipaddr == nullptr)
     {
@@ -89,14 +78,13 @@ void MqttClient::dns_found_callback(const char *name, const ip_addr_t *ipaddr, v
     else
     {
         printf("DNS query returned address %s\n", ip4addr_ntoa(ipaddr));
-        mqttClient->_host_address = *ipaddr;
+        publishContext->host_address = *ipaddr;
     }
-    mqttClient->_dns_lookup_done = true;
+    publishContext->dns_lookup_done = true;
 }
 
-err_t MqttClient::mqtt_connect()
+err_t MqttClient::mqtt_connect(MqttPublishContext& publishContext)
 {
-    _mqtt_publish_done = false;
     mqtt_connect_client_info_t ci
     {
         .client_id = "picow",
@@ -109,20 +97,20 @@ err_t MqttClient::mqtt_connect()
         .will_retain = 0
     };
 
-    return mqtt_client_connect(&_mqtt_client, &_host_address, _port, mqtt_connect_callback, this, &ci);
+    return mqtt_client_connect(&publishContext.mqtt_client, &publishContext.host_address, _port, mqtt_connect_callback, &publishContext, &ci);
 }
 
 void MqttClient::mqtt_connect_callback(mqtt_client_t *client, void *callback_arg, mqtt_connection_status_t status)
 {
     assert(callback_arg != nullptr);
-    MqttClient* mqttClient = reinterpret_cast<MqttClient*>(callback_arg);
+    MqttPublishContext* publishContext = reinterpret_cast<MqttPublishContext*>(callback_arg);
 
     if (status == MQTT_CONNECT_ACCEPTED)
     {
         printf("MQTT connection successful\n");
         u8_t qos = 1;
         u8_t retain = 0;
-        auto err = mqtt_publish(&mqttClient->_mqtt_client, mqttClient->_topic.c_str(), mqttClient->_message.c_str(), mqttClient->_message.length(), qos, retain, mqtt_publish_callback, callback_arg);
+        auto err = mqtt_publish(&publishContext->mqtt_client, publishContext->topic.c_str(), publishContext->message.c_str(), publishContext->message.length(), qos, retain, mqtt_publish_callback, callback_arg);
         if (err != ERR_OK)
         {
             printf("Publish failed with result %d\n", err);
@@ -131,14 +119,14 @@ void MqttClient::mqtt_connect_callback(mqtt_client_t *client, void *callback_arg
     else
     {
         printf("MQTT disconnected status %d\n", status);
-        mqttClient->_mqtt_publish_done = true;
+        publishContext->mqtt_publish_done = true;
     }
 }
 
 void MqttClient::mqtt_publish_callback(void *callback_arg, err_t result)
 {
     assert(callback_arg != nullptr);
-    MqttClient* mqttClient = reinterpret_cast<MqttClient*>(callback_arg);
+    MqttPublishContext* publishContext = reinterpret_cast<MqttPublishContext*>(callback_arg);
 
     if (result == ERR_OK)
     {
@@ -149,5 +137,5 @@ void MqttClient::mqtt_publish_callback(void *callback_arg, err_t result)
         printf("MQTT publish failed with status %d\n", result);
     }
 
-    mqttClient->_mqtt_publish_done = true;
+    publishContext->mqtt_publish_done = true;
 }
