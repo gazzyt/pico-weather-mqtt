@@ -1,0 +1,9 @@
+| PICO | PI |
+|--|--|
+| SWDIO | GPIO 24 (PIN 18) |
+| SWD GND | GND (PIN 20) |
+| SWCLK	| GPIO 25 (PIN 22) |
+| GPIO 0 (UART0_TX)	| GPIO 15 (UART_RX0) PIN 10 |
+| GPIO 1 (UART0_RX) | GPIO 14 (UART_TX0) PIN 8 |
+| GND | GND (PIN 14) |
+| VSYS | 3v3 (PIN 1) |

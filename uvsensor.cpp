@@ -7,6 +7,7 @@
 #include "sensor/BMP085.h"
 #include "sensor/DHT22.h"
 #include "sensor/VEML6070.h"
+#include "sensor_values.h"
 #include "ssd1306_i2c.h"
 #include "wifi_connection.h"
 
@@ -22,11 +23,11 @@ VEML6070 veml6070;
 DHT dht(GPIO_DHT_PIN, DHT11);
 BMP085 bmp085;
 
-void publish_temperature(float temp)
+void publish_sensor_values(const SensorValues& values)
 {
     WifiConnection wifi;
     MqttClient mqttClient{"rack2.mynet"};
-    mqttClient.Publish("sensors/temperature", "wibble");
+    mqttClient.Publish("sensors/station1", values.to_json());
 }
 
 int main()
@@ -58,22 +59,26 @@ int main()
 
 
     while (true) {
+        SensorValues values;
         std::ostringstream sbuff1, sbuff2, sbuff3;
 
         veml6070.sleep(false);
-        uint16_t uv = veml6070.readUV();
-        sbuff1 << "UV " << uv;
+        values.uv = veml6070.readUV();
+        sbuff1 << "UV " << values.uv;
         veml6070.sleep(true);
 
         bool dhtStatus = dht.read(false);
 
         if (dhtStatus)
         {
-            sbuff2 << "T " << static_cast<int>(dht.readTemperature(false, false)) << " H " << static_cast<int>(dht.readHumidity(false));
+            values.temp1 = dht.readTemperature(false, false);
+            values.humid = dht.readHumidity(false);
+            sbuff2 << "T " << static_cast<int>(values.temp1) << " H " << static_cast<int>(values.humid);
         }
 
-        auto bmpTemp = bmp085.readTemperature();
-        sbuff3 << "T " << std::setprecision(3) << bmpTemp << " P " << bmp085.readPressure();
+        values.temp2 = bmp085.readTemperature();
+        values.press = bmp085.readPressure();
+        sbuff3 << "T " << std::setprecision(3) << values.temp2 << " P " << values.press;
 
         display.DisplayText(sbuff1.str(), sbuff2.str(), sbuff3.str());
         printf(sbuff1.str().c_str());
@@ -83,7 +88,7 @@ int main()
         printf(sbuff3.str().c_str());
         printf("\n");
 
-        publish_temperature(bmpTemp);
+        publish_sensor_values(values);
 
         sleep_ms(10 * 60 * 1000);
     }
