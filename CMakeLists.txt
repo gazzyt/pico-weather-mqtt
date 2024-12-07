@@ -44,8 +44,8 @@ pico_set_program_name(uvsensor "uvsensor")
 pico_set_program_version(uvsensor "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(uvsensor 0)
-pico_enable_stdio_usb(uvsensor 1)
+pico_enable_stdio_uart(uvsensor 1)
+pico_enable_stdio_usb(uvsensor 0)
 
 # Add the standard library to the build
 target_link_libraries(uvsensor
