@@ -22,7 +22,7 @@ make -j4
 
 ## Flashing
 ```
-sudo openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c "adapter speed 5000" -c "program uvsensor.elf verify reset exit"
+sudo openocd -f ../openocd.cfg -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c "adapter speed 5000" -c "program uvsensor.elf verify reset exit"
  ```
 
  ## Viewing Log Messages
