@@ -109,7 +109,7 @@ void MqttClient::mqtt_connect_callback(mqtt_client_t *client, void *callback_arg
     {
         printf("MQTT connection successful\n");
         u8_t qos = 1;
-        u8_t retain = 0;
+        u8_t retain = 1;
         auto err = mqtt_publish(&publishContext->mqtt_client, publishContext->topic.c_str(), publishContext->message.c_str(), publishContext->message.length(), qos, retain, mqtt_publish_callback, callback_arg);
         if (err != ERR_OK)
         {
