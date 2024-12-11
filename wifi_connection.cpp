@@ -27,6 +27,32 @@ WifiConnection::WifiConnection()
 WifiConnection::~WifiConnection()
 {
     printf("Disconnecting from Wi-Fi...\n");
-    cyw43_arch_disable_sta_mode();
+    //cyw43_arch_disable_sta_mode();  // Commented out as this sometimes hangs
     cyw43_arch_deinit();
+#ifndef NDEBUG
+    auto link_status = cyw43_wifi_link_status(&cyw43_state, CYW43_ITF_STA);
+    printf("Wi-Fi status is %s (%d)\n", status_name(link_status), link_status);
+#endif
+    printf("Wi-Fi disconnected\n");
+}
+
+const char* WifiConnection::status_name(int status)
+{
+    switch (status) {
+    case CYW43_LINK_DOWN:
+        return "link down";
+    case CYW43_LINK_JOIN:
+        return "joining";
+    case CYW43_LINK_NOIP:
+        return "no ip";
+    case CYW43_LINK_UP:
+        return "link up";
+    case CYW43_LINK_FAIL:
+        return "link fail";
+    case CYW43_LINK_NONET:
+        return "network fail";
+    case CYW43_LINK_BADAUTH:
+        return "bad auth";
+    }
+    return "unknown";
 }

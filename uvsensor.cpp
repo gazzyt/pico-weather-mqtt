@@ -1,4 +1,5 @@
 #include <iomanip>
+#include <limits>
 #include <sstream>
 #include <stdio.h>
 #include "pico/stdlib.h"
@@ -32,6 +33,7 @@ void publish_sensor_values(const SensorValues& values)
 
 int main()
 {
+    unsigned int cycleNumber = 1;
     stdio_init_all();
 
     // I2C Initialisation. Using it at 400Khz.
@@ -59,6 +61,7 @@ int main()
 
 
     while (true) {
+        printf("Starting cycle %u\n", cycleNumber++);
         SensorValues values;
         std::ostringstream sbuff1, sbuff2, sbuff3;
 
@@ -67,29 +70,38 @@ int main()
         sbuff1 << "UV " << values.uv;
         veml6070.sleep(true);
 
-        bool dhtStatus = dht.read(false);
-
-        if (dhtStatus)
+        if (values.uv == std::numeric_limits<decltype(values.uv)>::max())
         {
-            values.temp1 = dht.readTemperature(false, false);
-            values.humid = dht.readHumidity(false);
-            sbuff2 << "T " << static_cast<int>(values.temp1) << " H " << static_cast<int>(values.humid);
+            // Have seen this happen occasionally due to i2c error.
+            // In this case just drop readings - it'll work on the next cycle
+            printf("ERROR: Failed to read uv sensor");
         }
+        else
+        {
+            bool dhtStatus = dht.read(false);
 
-        values.temp2 = bmp085.readTemperature();
-        values.press = bmp085.readPressure();
-        sbuff3 << "T " << std::setprecision(3) << values.temp2 << " P " << values.press;
+            if (dhtStatus)
+            {
+                values.temp1 = dht.readTemperature(false, false);
+                values.humid = dht.readHumidity(false);
+                sbuff2 << "T " << static_cast<int>(values.temp1) << " H " << static_cast<int>(values.humid);
+            }
 
-        display.DisplayText(sbuff1.str(), sbuff2.str(), sbuff3.str());
-        printf(sbuff1.str().c_str());
-        printf("\n");
-        printf(sbuff2.str().c_str());
-        printf("\n");
-        printf(sbuff3.str().c_str());
-        printf("\n");
+            values.temp2 = bmp085.readTemperature();
+            values.press = bmp085.readPressure();
+            sbuff3 << "T " << std::setprecision(3) << values.temp2 << " P " << values.press;
 
-        publish_sensor_values(values);
+            display.DisplayText(sbuff1.str(), sbuff2.str(), sbuff3.str());
+            printf(sbuff1.str().c_str());
+            printf("\n");
+            printf(sbuff2.str().c_str());
+            printf("\n");
+            printf(sbuff3.str().c_str());
+            printf("\n");
 
+            publish_sensor_values(values);
+        }
+        
         sleep_ms(10 * 60 * 1000);
     }
 }
