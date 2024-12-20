@@ -11,6 +11,7 @@ public:
     std::string to_json() const;
 
 public:
+    uint16_t cycle;
     uint16_t uv;
     float temp1;
     float humid;

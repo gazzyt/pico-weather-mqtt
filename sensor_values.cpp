@@ -14,7 +14,8 @@ std::string SensorValues::to_json() const
 {
     std::ostringstream sbuff;
 
-    sbuff   << "{\"uv\":" << uv
+    sbuff   << "{\"cycle\":" << cycle
+            << ",\"uv\":" << uv
             << std::setprecision(3)
             << ",\"temp1\":" << temp1
             << ",\"humid\":" << humid

@@ -61,8 +61,9 @@ int main()
 
 
     while (true) {
-        printf("Starting cycle %u\n", cycleNumber++);
+        printf("Starting cycle %u\n", cycleNumber);
         SensorValues values;
+        values.cycle = cycleNumber++;
         std::ostringstream sbuff1, sbuff2, sbuff3;
 
         veml6070.sleep(false);
