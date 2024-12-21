@@ -3,8 +3,10 @@
 #include <sstream>
 #include <stdio.h>
 #include "pico/stdlib.h"
+#include "hardware/adc.h"
 #include "hardware/i2c.h"
 #include "mqtt_client.h"
+#include "power_status.h"
 #include "sensor/BMP085.h"
 #include "sensor/DHT22.h"
 #include "sensor/VEML6070.h"
@@ -27,6 +29,15 @@ BMP085 bmp085;
 void publish_sensor_values(const SensorValues& values)
 {
     WifiConnection wifi;
+    float voltage;
+    if (power_voltage(&voltage) == PICO_OK)
+    {
+        std::ostringstream sbuff4;
+
+        sbuff4 << "V " << voltage << '\n';
+        printf(sbuff4.str().c_str());
+    }
+
     MqttClient mqttClient{"rack2.mynet"};
     mqttClient.Publish("sensors/station1", values.to_json());
 }
@@ -35,6 +46,8 @@ int main()
 {
     unsigned int cycleNumber = 1;
     stdio_init_all();
+
+    adc_init();
 
     // I2C Initialisation. Using it at 400Khz.
     i2c_init(I2C_PORT, 400*1000);

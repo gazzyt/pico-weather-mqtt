@@ -38,7 +38,7 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(uvsensor uvsensor.cpp ssd1306_i2c.cpp wifi_connection.cpp mqtt_client.cpp mqtt_publish_context.cpp sensor_values.cpp )
+add_executable(uvsensor uvsensor.cpp ssd1306_i2c.cpp wifi_connection.cpp mqtt_client.cpp mqtt_publish_context.cpp sensor_values.cpp power_status.cpp )
 
 pico_set_program_name(uvsensor "uvsensor")
 pico_set_program_version(uvsensor "0.1")
@@ -49,7 +49,9 @@ pico_enable_stdio_usb(uvsensor 0)
 
 # Add the standard library to the build
 target_link_libraries(uvsensor
-        pico_stdlib)
+        pico_stdlib
+        hardware_adc
+        hardware_gpio)
 
 # Add the standard include files to the build
 target_include_directories(uvsensor PRIVATE
