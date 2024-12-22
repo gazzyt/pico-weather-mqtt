@@ -27,8 +27,7 @@ void MqttClient::Publish(const std::string& topic, const std::string& message)
     {
         while (!publishContext.mqtt_publish_done)
         {
-            cyw43_arch_poll();
-            cyw43_arch_wait_for_work_until(make_timeout_time_ms(1000));
+            // Busy wait
         }
         
         printf("Disconnect MQTT\n");
@@ -60,8 +59,7 @@ void MqttClient::dns_lookup(MqttPublishContext& publishContext)
 
     while (!publishContext.dns_lookup_done)
     {
-        cyw43_arch_poll();
-        cyw43_arch_wait_for_work_until(make_timeout_time_ms(1000));
+        // Busy wait
     }
     
 }

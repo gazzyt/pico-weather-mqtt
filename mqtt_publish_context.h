@@ -17,9 +17,9 @@ public:
     const std::string& host;
     int port;
     ip_addr_t host_address;
-    bool dns_lookup_done;
+    volatile bool dns_lookup_done;
     mqtt_client_t mqtt_client;
-    bool mqtt_publish_done;
+    volatile bool mqtt_publish_done;
     std::string topic;
     std::string message;
 };

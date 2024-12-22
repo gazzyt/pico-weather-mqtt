@@ -27,7 +27,7 @@ WifiConnection::WifiConnection()
 WifiConnection::~WifiConnection()
 {
     printf("Disconnecting from Wi-Fi...\n");
-    //cyw43_arch_disable_sta_mode();  // Commented out as this sometimes hangs
+    cyw43_arch_disable_sta_mode();
     cyw43_arch_deinit();
 #ifndef NDEBUG
     auto link_status = cyw43_wifi_link_status(&cyw43_state, CYW43_ITF_STA);
