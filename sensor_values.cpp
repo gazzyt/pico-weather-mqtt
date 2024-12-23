@@ -7,7 +7,8 @@ SensorValues::SensorValues()
     temp1{0.0},
     humid{0.0},
     temp2{0.0},
-    press{0.0}
+    press{0.0},
+    vsys{0.0}
 {}
 
 std::string SensorValues::to_json() const
@@ -21,6 +22,7 @@ std::string SensorValues::to_json() const
             << ",\"humid\":" << humid
             << ",\"temp2\":" << temp2
             << ",\"press\":" << press
+            << ",\"vsys\":" << vsys
             << "}";
 
     return sbuff.str();

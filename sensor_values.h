@@ -17,6 +17,7 @@ public:
     float humid;
     float temp2;
     float press;
+    float vsys;
 };
 
 #endif

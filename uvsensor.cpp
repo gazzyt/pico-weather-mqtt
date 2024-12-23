@@ -26,20 +26,19 @@ VEML6070 veml6070;
 DHT dht(GPIO_DHT_PIN, DHT11);
 BMP085 bmp085;
 
-void publish_sensor_values(const SensorValues& values)
+void publish_sensor_values(SensorValues& values)
 {
     WifiConnection wifi;
     float voltage;
     if (power_voltage(&voltage) == PICO_OK)
     {
-        std::ostringstream sbuff4;
-
-        sbuff4 << "V " << voltage << '\n';
-        printf(sbuff4.str().c_str());
+        values.vsys = voltage;
     }
 
+    const auto mqttPayload = values.to_json();
+    printf("MQTT payload:\n%s\n", mqttPayload.c_str());
     MqttClient mqttClient{"rack2.mynet"};
-    mqttClient.Publish("sensors/station1", values.to_json());
+    mqttClient.Publish("sensors/station1", mqttPayload);
 }
 
 int main()
@@ -74,7 +73,7 @@ int main()
 
 
     while (true) {
-        printf("Starting cycle %u\n", cycleNumber);
+        printf("\n*****\nStarting cycle %u\n", cycleNumber);
         SensorValues values;
         values.cycle = cycleNumber++;
         std::ostringstream sbuff1, sbuff2, sbuff3;
@@ -106,12 +105,6 @@ int main()
             sbuff3 << "T " << std::setprecision(3) << values.temp2 << " P " << values.press;
 
             display.DisplayText(sbuff1.str(), sbuff2.str(), sbuff3.str());
-            printf(sbuff1.str().c_str());
-            printf("\n");
-            printf(sbuff2.str().c_str());
-            printf("\n");
-            printf(sbuff3.str().c_str());
-            printf("\n");
 
             publish_sensor_values(values);
         }
