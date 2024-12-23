@@ -70,3 +70,20 @@ target_link_libraries(uvsensor
 
 pico_add_extra_outputs(uvsensor)
 
+# Work out the openocd target from the PICO SDK configuration
+if (PICO_PLATFORM STREQUAL "rp2040")
+    set (OPENOCD_TARGET "rp2040")
+elseif (PICO_PLATFORM STREQUAL "rp2350-arm-s")
+    set (OPENOCD_TARGET "rp2350")
+elseif (PICO_PLATFORM STREQUAL "rp2350-riscv")
+    set (OPENOCD_TARGET "rp2350-riscv")
+else()
+    message (FATAL_ERROR "Unrecognised PICO_PLATFORM ${PICO_PLATFORM}")
+endif()
+
+
+add_custom_target(flash
+    COMMAND sudo openocd -f ../openocd.cfg -f interface/cmsis-dap.cfg -f target/${OPENOCD_TARGET}.cfg -c "adapter speed 5000" -c "program uvsensor.elf verify reset exit"
+)
+
+add_dependencies(flash uvsensor)
