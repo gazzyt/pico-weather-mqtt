@@ -58,6 +58,15 @@ int main()
     // For more examples of I2C use see https://github.com/raspberrypi/pico-examples/tree/master/i2c
 
     SSD1306I2C display;
+    if (display.IsDisplayPresent())
+    {
+        printf("SSD1306 display present");
+    }
+    else
+    {
+        printf("SSD1306 display NOT present");
+    }
+
     veml6070.begin(I2C_PORT, VEML6070_4_T);
     dht.begin();
     if (!bmp085.begin(I2C_PORT))
@@ -76,18 +85,16 @@ int main()
         printf("\n*****\nStarting cycle %u\n", cycleNumber);
         SensorValues values;
         values.cycle = cycleNumber++;
-        std::ostringstream sbuff1, sbuff2, sbuff3;
 
         veml6070.sleep(false);
         values.uv = veml6070.readUV();
-        sbuff1 << "UV " << values.uv;
         veml6070.sleep(true);
 
         if (values.uv == std::numeric_limits<decltype(values.uv)>::max())
         {
             // Have seen this happen occasionally due to i2c error.
             // In this case just drop readings - it'll work on the next cycle
-            printf("ERROR: Failed to read uv sensor");
+            printf("ERROR: Failed to read uv sensor\n");
         }
         else
         {
@@ -97,14 +104,19 @@ int main()
             {
                 values.temp1 = dht.readTemperature(false, false);
                 values.humid = dht.readHumidity(false);
-                sbuff2 << "T " << static_cast<int>(values.temp1) << " H " << static_cast<int>(values.humid);
             }
 
             values.temp2 = bmp085.readTemperature();
             values.press = bmp085.readPressure();
-            sbuff3 << "T " << std::setprecision(3) << values.temp2 << " P " << values.press;
 
-            display.DisplayText(sbuff1.str(), sbuff2.str(), sbuff3.str());
+            if (display.IsDisplayPresent())
+            {
+                std::ostringstream sbuff1, sbuff2, sbuff3;
+                sbuff1 << "UV " << values.uv;
+                sbuff2 << "T " << static_cast<int>(values.temp1) << " H " << static_cast<int>(values.humid);
+                sbuff3 << "T " << std::setprecision(3) << values.temp2 << " P " << values.press;
+                display.DisplayText(sbuff1.str(), sbuff2.str(), sbuff3.str());
+            }
 
             publish_sensor_values(values);
         }

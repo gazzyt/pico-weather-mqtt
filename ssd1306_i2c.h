@@ -16,6 +16,7 @@ class SSD1306I2C
 {
 public:
     SSD1306I2C();
+    inline bool IsDisplayPresent() const { return m_displayPresent; }
     void DisplayText(const std::string& line1, const std::string& line2, const std::string& line3);
 
 private:
@@ -25,6 +26,7 @@ private:
     static constexpr size_t NUM_PAGES = HEIGHT / PAGE_HEIGHT;
     static constexpr size_t BUF_LEN = NUM_PAGES * WIDTH;
 
+    bool m_displayPresent;
     uint8_t m_buffer[BUF_LEN];
     
     // Initialize render area for entire frame (SSD1306_WIDTH pixels by SSD1306_NUM_PAGES pages)

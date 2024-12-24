@@ -78,6 +78,8 @@
 #define SSD1306_SET_COM_PIN_CFG     _u(0xDA)
 #define SSD1306_SET_VCOM_DESEL      _u(0xDB)
 
+#define SSD1306_NOP                 _u(0xE3)
+
 #define SSD1306_PAGE_HEIGHT         _u(8)
 #define SSD1306_NUM_PAGES           (SSD1306_HEIGHT / SSD1306_PAGE_HEIGHT)
 #define SSD1306_BUF_LEN             (SSD1306_NUM_PAGES * SSD1306_WIDTH)
@@ -95,12 +97,12 @@ void calc_render_area_buflen(struct render_area *area) {
 
 #ifdef i2c_default
 
-void SSD1306_send_cmd(uint8_t cmd) {
+int SSD1306_send_cmd(uint8_t cmd) {
     // I2C write process expects a control byte followed by data
     // this "data" can be a command or data to follow up a command
     // Co = 1, D/C = 0 => the driver expects a command
     uint8_t buf[2] = {0x80, cmd};
-    i2c_write_blocking(i2c_default, SSD1306_I2C_ADDR, buf, 2, false);
+    return i2c_write_blocking(i2c_default, SSD1306_I2C_ADDR, buf, 2, false);
 }
 
 void SSD1306_send_cmd_list(uint8_t *buf, int num) {
@@ -235,29 +237,39 @@ static void WriteString(uint8_t *buf, int16_t x, int16_t y, const char *str) {
 
 
 SSD1306I2C::SSD1306I2C()
+:   m_displayPresent{false}
 {
-    // run through the complete initialization process
-    SSD1306_init();    
+    // Check if the display is present
+    m_displayPresent = SSD1306_send_cmd(SSD1306_NOP) != PICO_ERROR_GENERIC;
 
-    calc_render_area_buflen(&m_frame_area);
+    if (m_displayPresent)
+    {
+        // run through the complete initialization process
+        SSD1306_init();    
 
-    memset(m_buffer, 0, BUF_LEN);
-    render(m_buffer, &m_frame_area);
+        calc_render_area_buflen(&m_frame_area);
 
-        // intro sequence: flash the screen 3 times
-    for (int i = 0; i < 3; i++) {
-        SSD1306_send_cmd(SSD1306_SET_ALL_ON);    // Set all pixels on
-        sleep_ms(500);
-        SSD1306_send_cmd(SSD1306_SET_ENTIRE_ON); // go back to following RAM for pixel state
-        sleep_ms(500);
+        memset(m_buffer, 0, BUF_LEN);
+        render(m_buffer, &m_frame_area);
+
+            // intro sequence: flash the screen 3 times
+        for (int i = 0; i < 3; i++) {
+            SSD1306_send_cmd(SSD1306_SET_ALL_ON);    // Set all pixels on
+            sleep_ms(500);
+            SSD1306_send_cmd(SSD1306_SET_ENTIRE_ON); // go back to following RAM for pixel state
+            sleep_ms(500);
+        }
     }
 }
 
 void SSD1306I2C::DisplayText(const std::string& line1, const std::string& line2, const std::string& line3)
 {
-    memset(m_buffer, 0, BUF_LEN);
-    WriteString(m_buffer, 5, 0, line1.c_str());
-    WriteString(m_buffer, 5, 8, line2.c_str());
-    WriteString(m_buffer, 5, 16, line3.c_str());
-    render(m_buffer, &m_frame_area);
+    if (m_displayPresent)
+    {
+        memset(m_buffer, 0, BUF_LEN);
+        WriteString(m_buffer, 5, 0, line1.c_str());
+        WriteString(m_buffer, 5, 8, line2.c_str());
+        WriteString(m_buffer, 5, 16, line3.c_str());
+        render(m_buffer, &m_frame_area);
+    }
 }
