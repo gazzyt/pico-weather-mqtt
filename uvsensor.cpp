@@ -13,6 +13,7 @@
 #include "sensor/VEML6070.h"
 #include "sensor_values.h"
 #include "ssd1306_i2c.h"
+#include "watchdog.h"
 #include "wifi_connection.h"
 
 // I2C defines
@@ -46,6 +47,15 @@ int main()
 {
     unsigned int cycleNumber = 1;
     stdio_init_all();
+
+    if (watchdog_caused_reboot())
+    {
+        printf("Rebooted by Watchdog!\n");
+    }
+    else
+    {
+        printf("Clean boot\n");
+    }
 
     adc_init();
 
@@ -81,6 +91,7 @@ int main()
         sleep_ms(5000);
     }
 
+    Watchdog::enable();
 
     while (true) {
         printf("\n*****\nStarting cycle %u\n", cycleNumber);
@@ -122,9 +133,16 @@ int main()
                 display.DisplayText(sbuff1.str(), sbuff2.str(), sbuff3.str());
             }
 
+            watchdog_update();
             publish_sensor_values(values);
         }
-        
-        sleep_ms(10 * 60 * 1000);
+
+        watchdog_update();
+
+        for (auto i = 0; i < 75; ++i)
+        {
+            sleep_ms(8 * 1000);
+            watchdog_update();
+        }
     }
 }

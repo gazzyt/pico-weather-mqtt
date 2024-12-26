@@ -51,7 +51,8 @@ pico_enable_stdio_usb(uvsensor 0)
 target_link_libraries(uvsensor
         pico_stdlib
         hardware_adc
-        hardware_gpio)
+        hardware_gpio
+        hardware_watchdog)
 
 # Add the standard include files to the build
 target_include_directories(uvsensor PRIVATE

@@ -10,6 +10,8 @@ public:
     ~WifiConnection();
 
 private:
+    inline static constexpr unsigned int max_connection_retries = 3;
+    bool is_connected;
     static const char* status_name(int status);
 };
 
