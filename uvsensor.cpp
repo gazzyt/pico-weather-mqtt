@@ -5,6 +5,7 @@
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
 #include "hardware/i2c.h"
+#include "memory_status.h"
 #include "mqtt_client.h"
 #include "power_status.h"
 #include "sensor/BMP085.h"
@@ -83,6 +84,9 @@ int main()
 
     while (true) {
         printf("\n*****\nStarting cycle %u\n", cycleNumber);
+        
+        MemoryStatus::PrintMemoryStatus();
+        
         SensorValues values;
         values.cycle = cycleNumber++;
 
