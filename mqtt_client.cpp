@@ -1,5 +1,6 @@
 #include <cassert>
 #include "lwip/dns.h"
+#include "logger.h"
 #include "mqtt_client.h"
 #include "pico/cyw43_arch.h"
 
@@ -30,30 +31,30 @@ void MqttClient::Publish(const std::string& topic, const std::string& message)
             // Busy wait
         }
         
-        printf("Disconnect MQTT\n");
+        LOG_INFO("Disconnect MQTT\n");
         mqtt_disconnect(&publishContext.mqtt_client);
     }
     else
     {
-        printf("MQTT connect failed with error code %d\n", connect_err);
+        LOG_INFO("MQTT connect failed with error code %d\n", connect_err);
     }
 }
 
 void MqttClient::dns_lookup(MqttPublishContext& publishContext)
 {
     auto hostname = publishContext.host.c_str();
-    printf("Begin DNS lookup for %s\n", hostname);
+    LOG_INFO("Begin DNS lookup for %s\n", hostname);
     auto err = dns_gethostbyname(hostname, &publishContext.host_address, dns_found_callback, &publishContext);
 
     if (err == ERR_ARG)
     {
-        printf("Failed to start DNS query\n");
+        LOG_ERROR("Failed to start DNS query\n");
         return;
     }
 
     if (err == ERR_OK)
     {
-        printf("Address found in local cache\n");
+        LOG_INFO("Address found in local cache\n");
         return;
     }
 
@@ -71,11 +72,11 @@ void MqttClient::dns_found_callback(const char *name, const ip_addr_t *ipaddr, v
 
     if (ipaddr == nullptr)
     {
-        printf("DNS query failed\n");
+        LOG_ERROR("DNS query failed\n");
     }
     else
     {
-        printf("DNS query returned address %s\n", ip4addr_ntoa(ipaddr));
+        LOG_INFO("DNS query returned address %s\n", ip4addr_ntoa(ipaddr));
         publishContext->host_address = *ipaddr;
     }
     publishContext->dns_lookup_done = true;
@@ -105,18 +106,18 @@ void MqttClient::mqtt_connect_callback(mqtt_client_t *client, void *callback_arg
 
     if (status == MQTT_CONNECT_ACCEPTED)
     {
-        printf("MQTT connection successful\n");
+        LOG_INFO("MQTT connection successful\n");
         u8_t qos = 1;
         u8_t retain = 1;
         auto err = mqtt_publish(&publishContext->mqtt_client, publishContext->topic.c_str(), publishContext->message.c_str(), publishContext->message.length(), qos, retain, mqtt_publish_callback, callback_arg);
         if (err != ERR_OK)
         {
-            printf("Publish failed with result %d\n", err);
+            LOG_ERROR("Publish failed with result %d\n", err);
         }
     }
     else
     {
-        printf("MQTT disconnected status %d\n", status);
+        LOG_INFO("MQTT disconnected status %d\n", status);
         publishContext->mqtt_publish_done = true;
     }
 }
@@ -128,11 +129,11 @@ void MqttClient::mqtt_publish_callback(void *callback_arg, err_t result)
 
     if (result == ERR_OK)
     {
-        printf("MQTT publish succeeded\n");
+        LOG_INFO("MQTT publish succeeded\n");
     }
     else
     {
-        printf("MQTT publish failed with status %d\n", result);
+        LOG_ERROR("MQTT publish failed with status %d\n", result);
     }
 
     publishContext->mqtt_publish_done = true;

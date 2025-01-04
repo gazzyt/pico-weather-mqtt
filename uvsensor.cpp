@@ -5,6 +5,7 @@
 #include "pico/stdlib.h"
 #include "hardware/adc.h"
 #include "hardware/i2c.h"
+#include "logger.h"
 #include "memory_status.h"
 #include "mqtt_client.h"
 #include "power_status.h"
@@ -38,7 +39,7 @@ void publish_sensor_values(SensorValues& values)
     }
 
     const auto mqttPayload = values.to_json();
-    printf("MQTT payload:\n%s\n", mqttPayload.c_str());
+    LOG_INFO("MQTT payload: %s\n", mqttPayload.c_str());
     MqttClient mqttClient{"rack2.mynet"};
     mqttClient.Publish("sensors/station1", mqttPayload);
 }
@@ -50,11 +51,11 @@ int main()
 
     if (watchdog_caused_reboot())
     {
-        printf("Rebooted by Watchdog!\n");
+        LOG_INFO("Rebooted by Watchdog!\n");
     }
     else
     {
-        printf("Clean boot\n");
+        LOG_INFO("Clean boot\n");
     }
 
     adc_init();
@@ -71,11 +72,11 @@ int main()
     SSD1306I2C display;
     if (display.IsDisplayPresent())
     {
-        printf("SSD1306 display present");
+        LOG_INFO("SSD1306 display present\n");
     }
     else
     {
-        printf("SSD1306 display NOT present");
+        LOG_INFO("SSD1306 display NOT present\n");
     }
 
     veml6070.begin(I2C_PORT, VEML6070_4_T);
@@ -94,7 +95,7 @@ int main()
     Watchdog::enable();
 
     while (true) {
-        printf("\n*****\nStarting cycle %u\n", cycleNumber);
+        LOG_INFO("Starting cycle %u\n", cycleNumber);
         
         MemoryStatus::PrintMemoryStatus();
         
@@ -109,7 +110,7 @@ int main()
         {
             // Have seen this happen occasionally due to i2c error.
             // In this case just drop readings - it'll work on the next cycle
-            printf("ERROR: Failed to read uv sensor\n");
+            LOG_ERROR("Failed to read uv sensor\n");
         }
         else
         {

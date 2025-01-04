@@ -1,10 +1,11 @@
+#include "logger.h"
 #include "memory_status.h"
 #include <malloc.h>
 #include <stdio.h>
 
 void MemoryStatus::PrintMemoryStatus()
 {
-    printf("Free heap = %u\n", GetFreeHeap());
+    LOG_INFO("Free heap = %u\n", GetFreeHeap());
 }
 
 unsigned int MemoryStatus::GetFreeHeap()

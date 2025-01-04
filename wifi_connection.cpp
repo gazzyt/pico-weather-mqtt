@@ -1,3 +1,4 @@
+#include "logger.h"
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 #include "secrets.h"
@@ -9,7 +10,7 @@ WifiConnection::WifiConnection()
 {
     // Initialise the Wi-Fi chip
     if (cyw43_arch_init()) {
-        printf("Wi-Fi init failed\n");
+        LOG_ERROR("Wi-Fi init failed\n");
     }
 
     // Enable wifi station
@@ -19,31 +20,33 @@ WifiConnection::WifiConnection()
 
     for (unsigned int connection_attempt = 1; connection_attempt <= max_connection_retries && !is_connected; ++connection_attempt)
     {
-        printf("Connecting to Wi-Fi attempt %u\n", connection_attempt);
+        LOG_INFO("Connecting to Wi-Fi attempt %u\n", connection_attempt);
         if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, Watchdog::watchdog_time_ms)) {
-            printf("failed to connect.\n");
+            LOG_ERROR("failed to connect.\n");
         }
         else
         {
             is_connected = true;
-            printf("Connected.\n");
+            LOG_INFO("Connected.\n");
             // Read the ip address in a human readable way
             uint8_t *ip_address = (uint8_t*)&(cyw43_state.netif[0].ip_addr.addr);
-            printf("IP address %d.%d.%d.%d\n", ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
+            LOG_INFO("IP address %d.%d.%d.%d\n", ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
         }
+
+        watchdog_update();
     }
 }
 
 WifiConnection::~WifiConnection()
 {
-    printf("Disconnecting from Wi-Fi...\n");
+    LOG_INFO("Disconnecting from Wi-Fi...\n");
     cyw43_arch_disable_sta_mode();
     cyw43_arch_deinit();
 #ifndef NDEBUG
     auto link_status = cyw43_wifi_link_status(&cyw43_state, CYW43_ITF_STA);
-    printf("Wi-Fi status is %s (%d)\n", status_name(link_status), link_status);
+    LOG_INFO("Wi-Fi status is %s (%d)\n", status_name(link_status), link_status);
 #endif
-    printf("Wi-Fi disconnected\n");
+    LOG_INFO("Wi-Fi disconnected\n");
 }
 
 const char* WifiConnection::status_name(int status)
