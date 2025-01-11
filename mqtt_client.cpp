@@ -22,7 +22,9 @@ void MqttClient::Publish(const std::string& topic, const std::string& message)
 
     dns_lookup(publishContext);
 
+    cyw43_arch_lwip_begin();
     auto connect_err = mqtt_connect(publishContext);
+    cyw43_arch_lwip_end();
 
     if (connect_err == ERR_OK)
     {
@@ -32,7 +34,9 @@ void MqttClient::Publish(const std::string& topic, const std::string& message)
         }
         
         LOG_INFO("Disconnect MQTT\n");
+        cyw43_arch_lwip_begin();
         mqtt_disconnect(&publishContext.mqtt_client);
+        cyw43_arch_lwip_end();
     }
     else
     {
