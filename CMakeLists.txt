@@ -41,6 +41,10 @@ pico_sdk_init()
 add_executable(uvsensor uvsensor.cpp ssd1306_i2c.cpp wifi_connection.cpp mqtt_client.cpp mqtt_publish_context.cpp 
     sensor_values.cpp power_status.cpp memory_status.cpp logger.cpp )
 
+target_compile_definitions(uvsensor PRIVATE
+    PICO_STACK_SIZE=4096
+)
+
 pico_set_program_name(uvsensor "uvsensor")
 pico_set_program_version(uvsensor "0.1")
 
