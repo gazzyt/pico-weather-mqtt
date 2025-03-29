@@ -9,8 +9,10 @@
 #include "memory_status.h"
 #include "mqtt_client.h"
 #include "power_status.h"
+#include "sensor/BME680.h"
 #include "sensor/BMP085.h"
 #include "sensor/DHT22.h"
+#include "sensor/SHT31.h"
 #include "sensor/VEML6070.h"
 #include "sensor_values.h"
 #include "ssd1306_i2c.h"
@@ -27,7 +29,9 @@
 
 VEML6070 veml6070;
 DHT dht(GPIO_DHT_PIN, DHT11);
+BME680 bme680{BME68X_ALT_ADDRESS};
 BMP085 bmp085;
+SHT31 sht31;
 
 void publish_sensor_values(SensorValues& values)
 {
@@ -81,6 +85,14 @@ int main()
 
     veml6070.begin(I2C_PORT, VEML6070_4_T);
     dht.begin();
+    if (!bme680.begin(I2C_PORT))
+    {
+        LOG_ERROR("BME680 failed\n");
+    }
+    else
+    {
+        LOG_ERROR("BME680 succeeded\n");
+    }
     if (!bmp085.begin(I2C_PORT))
     {
         display.DisplayText("BMP085 failed", "", "");
@@ -91,6 +103,7 @@ int main()
         display.DisplayText("BMP085 succeeded", "", "");
         sleep_ms(5000);
     }
+    sht31.begin(I2C_PORT);
 
     Watchdog::enable();
 
@@ -124,6 +137,12 @@ int main()
 
             values.temp2 = bmp085.readTemperature();
             values.press = bmp085.readPressure();
+            sht31.readBoth(&values.temp3, &values.humid2);
+
+            bme680.performReading();
+            values.temp4 = bme680.temperature;
+            values.press2 = bme680.pressure;
+            values.humid3 = bme680.humidity;
 
             if (display.IsDisplayPresent())
             {

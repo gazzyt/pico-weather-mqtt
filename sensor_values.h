@@ -14,9 +14,14 @@ public:
     uint16_t cycle;
     uint16_t uv;
     float temp1;
-    float humid;
     float temp2;
+    float temp3;
+    float temp4;
+    float humid;
+    float humid2;
+    float humid3;
     float press;
+    uint32_t press2;
     float vsys;
 };
 
