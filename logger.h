@@ -1,6 +1,11 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
+#include "hardware/timer.h"
+#include <chrono>
+#include <format>
+#include <iostream>
+
 class Logger
 {
 public:
@@ -13,16 +18,47 @@ public:
         error
     };
     static log_levels log_level;
-    static void Log(log_levels level, const char* format, ...);
+
+    template <typename ...Args>
+    static void Log(log_levels level, std::format_string<Args...>&& format_string, Args&&... args)
+    {
+        if (level >= log_level)
+        {
+            std::chrono::milliseconds ms{time_us_64() / 1000};
+            std::string timestamp = std::format(" {0:%T} ", ms);
+            std::string message = std::format(format_string, std::forward<Args>(args)...);
+            std::cout << level_names[level] << timestamp << message << std::endl;
+        }
+    }
+
+
 
 private:
     static constexpr const char* level_names[] {"DBG", "INF", "WRN", "ERR"};
 };
 
-#define LOG_DEBUG(format, ...) Logger::Log(Logger::debug, format __VA_OPT__(,) __VA_ARGS__ );
-#define LOG_INFO(format, ...) Logger::Log(Logger::info, format __VA_OPT__(,) __VA_ARGS__ );
-#define LOG_WARN(format, ...) Logger::Log(Logger::warn, format __VA_OPT__(,) __VA_ARGS__ );
-#define LOG_ERROR(format, ...) Logger::Log(Logger::error, format __VA_OPT__(,) __VA_ARGS__ );
+template <typename ...Args>
+static void LogDebug(std::format_string<Args...> format_string, Args&&... args)
+{
+    Logger::Log(Logger::debug, std::forward<std::format_string<Args...> >(format_string), std::forward<Args>(args)...);
+}
 
+template <typename ...Args>
+static void LogInfo(std::format_string<Args...> format_string, Args&&... args)
+{
+    Logger::Log(Logger::info, std::forward<std::format_string<Args...> >(format_string), std::forward<Args>(args)...);
+}
+
+template <typename ...Args>
+static void LogWarn(std::format_string<Args...> format_string, Args&&... args)
+{
+    Logger::Log(Logger::warn, std::forward<std::format_string<Args...> >(format_string), std::forward<Args>(args)...);
+}
+
+template <typename ...Args>
+static void LogError(std::format_string<Args...> format_string, Args&&... args)
+{
+    Logger::Log(Logger::error, std::forward<std::format_string<Args...> >(format_string), std::forward<Args>(args)...);
+}
 
 #endif

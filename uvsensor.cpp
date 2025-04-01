@@ -43,7 +43,7 @@ void publish_sensor_values(SensorValues& values)
     }
 
     const auto mqttPayload = values.to_json();
-    LOG_INFO("MQTT payload: %s\n", mqttPayload.c_str());
+    LogInfo("MQTT payload: {}", mqttPayload.c_str());
     MqttClient mqttClient{"rack2.mynet"};
     mqttClient.Publish("sensors/station1", mqttPayload);
 }
@@ -55,11 +55,11 @@ int main()
 
     if (watchdog_caused_reboot())
     {
-        LOG_INFO("Rebooted by Watchdog!\n");
+        LogInfo("Rebooted by Watchdog!");
     }
     else
     {
-        LOG_INFO("Clean boot\n");
+        LogInfo("Clean boot");
     }
 
     adc_init();
@@ -76,22 +76,22 @@ int main()
     SSD1306I2C display;
     if (display.IsDisplayPresent())
     {
-        LOG_INFO("SSD1306 display present\n");
+        LogInfo("SSD1306 display present");
     }
     else
     {
-        LOG_INFO("SSD1306 display NOT present\n");
+        LogInfo("SSD1306 display NOT present");
     }
 
     veml6070.begin(I2C_PORT, VEML6070_4_T);
     dht.begin();
     if (!bme680.begin(I2C_PORT))
     {
-        LOG_ERROR("BME680 failed\n");
+        LogInfo("BME680 failed");
     }
     else
     {
-        LOG_ERROR("BME680 succeeded\n");
+        LogInfo("BME680 succeeded");
     }
     if (!bmp085.begin(I2C_PORT))
     {
@@ -108,7 +108,7 @@ int main()
     Watchdog::enable();
 
     while (true) {
-        LOG_INFO("Starting cycle %u\n", cycleNumber);
+        LogInfo("Starting cycle {}", cycleNumber);
         
         MemoryStatus::PrintMemoryStatus();
         
@@ -123,7 +123,7 @@ int main()
         {
             // Have seen this happen occasionally due to i2c error.
             // In this case just drop readings - it'll work on the next cycle
-            LOG_ERROR("Failed to read uv sensor\n");
+            LogInfo("Failed to read uv sensor");
         }
         else
         {

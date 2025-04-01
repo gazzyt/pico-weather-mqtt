@@ -10,7 +10,7 @@ WifiConnection::WifiConnection()
 {
     // Initialise the Wi-Fi chip
     if (cyw43_arch_init()) {
-        LOG_ERROR("Wi-Fi init failed\n");
+        LogError("Wi-Fi init failed");
     }
 
     // Enable wifi station
@@ -20,17 +20,17 @@ WifiConnection::WifiConnection()
 
     for (unsigned int connection_attempt = 1; connection_attempt <= max_connection_retries && !is_connected; ++connection_attempt)
     {
-        LOG_INFO("Connecting to Wi-Fi attempt %u\n", connection_attempt);
+        LogInfo("Connecting to Wi-Fi attempt {}", connection_attempt);
         if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, Watchdog::watchdog_time_ms)) {
-            LOG_ERROR("failed to connect.\n");
+            LogError("failed to connect.");
         }
         else
         {
             is_connected = true;
-            LOG_INFO("Connected.\n");
+            LogInfo("Connected.");
             // Read the ip address in a human readable way
             uint8_t *ip_address = (uint8_t*)&(cyw43_state.netif[0].ip_addr.addr);
-            LOG_INFO("IP address %d.%d.%d.%d\n", ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
+            LogInfo("IP address {}.{}.{}.{}", ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
         }
 
         watchdog_update();
@@ -39,14 +39,14 @@ WifiConnection::WifiConnection()
 
 WifiConnection::~WifiConnection()
 {
-    LOG_INFO("Disconnecting from Wi-Fi...\n");
+    LogInfo("Disconnecting from Wi-Fi...");
     cyw43_arch_disable_sta_mode();
     cyw43_arch_deinit();
 #ifndef NDEBUG
     auto link_status = cyw43_wifi_link_status(&cyw43_state, CYW43_ITF_STA);
-    LOG_INFO("Wi-Fi status is %s (%d)\n", status_name(link_status), link_status);
+    LogInfo("Wi-Fi status is {} ({})", status_name(link_status), link_status);
 #endif
-    LOG_INFO("Wi-Fi disconnected\n");
+    LogInfo("Wi-Fi disconnected");
 }
 
 const char* WifiConnection::status_name(int status)

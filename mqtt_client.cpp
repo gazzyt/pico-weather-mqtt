@@ -33,32 +33,32 @@ void MqttClient::Publish(const std::string& topic, const std::string& message)
             // Busy wait
         }
         
-        LOG_INFO("Disconnect MQTT\n");
+        LogInfo("Disconnect MQTT");
         cyw43_arch_lwip_begin();
         mqtt_disconnect(&publishContext.mqtt_client);
         cyw43_arch_lwip_end();
     }
     else
     {
-        LOG_INFO("MQTT connect failed with error code %d\n", connect_err);
+        LogInfo("MQTT connect failed with error code {}", connect_err);
     }
 }
 
 void MqttClient::dns_lookup(MqttPublishContext& publishContext)
 {
     auto hostname = publishContext.host.c_str();
-    LOG_INFO("Begin DNS lookup for %s\n", hostname);
+    LogInfo("Begin DNS lookup for {}", hostname);
     auto err = dns_gethostbyname(hostname, &publishContext.host_address, dns_found_callback, &publishContext);
 
     if (err == ERR_ARG)
     {
-        LOG_ERROR("Failed to start DNS query\n");
+        LogError("Failed to start DNS query");
         return;
     }
 
     if (err == ERR_OK)
     {
-        LOG_INFO("Address found in local cache\n");
+        LogInfo("Address found in local cache");
         return;
     }
 
@@ -76,11 +76,11 @@ void MqttClient::dns_found_callback(const char *name, const ip_addr_t *ipaddr, v
 
     if (ipaddr == nullptr)
     {
-        LOG_ERROR("DNS query failed\n");
+        LogError("DNS query failed");
     }
     else
     {
-        LOG_INFO("DNS query returned address %s\n", ip4addr_ntoa(ipaddr));
+        LogInfo("DNS query returned address {}", ip4addr_ntoa(ipaddr));
         publishContext->host_address = *ipaddr;
     }
     publishContext->dns_lookup_done = true;
@@ -110,18 +110,18 @@ void MqttClient::mqtt_connect_callback(mqtt_client_t *client, void *callback_arg
 
     if (status == MQTT_CONNECT_ACCEPTED)
     {
-        LOG_INFO("MQTT connection successful\n");
+        LogInfo("MQTT connection successful");
         u8_t qos = 1;
         u8_t retain = 1;
         auto err = mqtt_publish(&publishContext->mqtt_client, publishContext->topic.c_str(), publishContext->message.c_str(), publishContext->message.length(), qos, retain, mqtt_publish_callback, callback_arg);
         if (err != ERR_OK)
         {
-            LOG_ERROR("Publish failed with result %d\n", err);
+            LogError("Publish failed with result {}", err);
         }
     }
     else
     {
-        LOG_INFO("MQTT disconnected status %d\n", status);
+        LogInfo("MQTT disconnected status {}", static_cast<int>(status));
         publishContext->mqtt_publish_done = true;
     }
 }
@@ -133,11 +133,11 @@ void MqttClient::mqtt_publish_callback(void *callback_arg, err_t result)
 
     if (result == ERR_OK)
     {
-        LOG_INFO("MQTT publish succeeded\n");
+        LogInfo("MQTT publish succeeded");
     }
     else
     {
-        LOG_ERROR("MQTT publish failed with status %d\n", result);
+        LogError("MQTT publish failed with status {}", result);
     }
 
     publishContext->mqtt_publish_done = true;

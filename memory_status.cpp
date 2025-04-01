@@ -5,7 +5,7 @@
 
 void MemoryStatus::PrintMemoryStatus()
 {
-    LOG_INFO("Free heap = %u\n", GetFreeHeap());
+    LogInfo("Free heap = {}", GetFreeHeap());
 }
 
 unsigned int MemoryStatus::GetFreeHeap()

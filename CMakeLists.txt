@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.13)
 
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Initialise pico_sdk from installed location
@@ -15,9 +15,9 @@ if(WIN32)
 else()
     set(USERHOME $ENV{HOME})
 endif()
-set(sdkVersion 2.1.0)
-set(toolchainVersion 13_3_Rel1)
-set(picotoolVersion 2.1.0)
+set(sdkVersion 2.1.1)
+set(toolchainVersion 14_2_Rel1)
+set(picotoolVersion 2.1.1)
 set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
 if (EXISTS ${picoVscode})
     include(${picoVscode})
@@ -44,6 +44,8 @@ add_executable(uvsensor uvsensor.cpp ssd1306_i2c.cpp wifi_connection.cpp mqtt_cl
 target_compile_definitions(uvsensor PRIVATE
     PICO_STACK_SIZE=4096
 )
+
+target_compile_options(uvsensor PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-psabi> )
 
 pico_set_program_name(uvsensor "uvsensor")
 pico_set_program_version(uvsensor "0.1")
