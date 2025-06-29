@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.13)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(PEDANTIC_WARNINGS 1)
 
 # Initialise pico_sdk from installed location
 # (note this can come from environment, CMake cache etc)
@@ -45,7 +46,10 @@ target_compile_definitions(uvsensor PRIVATE
     PICO_STACK_SIZE=4096
 )
 
-target_compile_options(uvsensor PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-psabi> )
+target_compile_options(uvsensor PRIVATE
+$<$<CXX_COMPILER_ID:GNU>:-Wall -Wno-unused-function -Wno-psabi>
+$<$<AND:$<CXX_COMPILER_ID:GNU>,$<BOOL:${PEDANTIC_WARNINGS}>>:-Wpedantic -Wextra>
+)
 
 pico_set_program_name(uvsensor "uvsensor")
 pico_set_program_version(uvsensor "0.1")
