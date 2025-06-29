@@ -1,6 +1,6 @@
 #include "logger.h"
-#include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
+#include "pico/stdlib.h"
 #include "secrets.h"
 #include "watchdog.h"
 #include "wifi_connection.h"
@@ -9,7 +9,7 @@ WifiConnection::WifiConnection()
 :   is_connected{false}
 {
     // Initialise the Wi-Fi chip
-    if (cyw43_arch_init()) {
+    if (cyw43_arch_init() != 0) {
         LogError("Wi-Fi init failed");
     }
 
@@ -21,7 +21,7 @@ WifiConnection::WifiConnection()
     for (unsigned int connection_attempt = 1; connection_attempt <= max_connection_retries && !is_connected; ++connection_attempt)
     {
         LogInfo("Connecting to Wi-Fi attempt {}", connection_attempt);
-        if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, Watchdog::watchdog_time_ms)) {
+        if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, Watchdog::watchdog_time_ms) != 0) {
             LogError("failed to connect.");
         }
         else
@@ -29,7 +29,7 @@ WifiConnection::WifiConnection()
             is_connected = true;
             LogInfo("Connected.");
             // Read the ip address in a human readable way
-            uint8_t *ip_address = (uint8_t*)&(cyw43_state.netif[0].ip_addr.addr);
+            auto *ip_address = reinterpret_cast<uint8_t*>(&(cyw43_state.netif[0].ip_addr.addr));
             LogInfo("IP address {}.{}.{}.{}", ip_address[0], ip_address[1], ip_address[2], ip_address[3]);
         }
 
@@ -66,6 +66,7 @@ const char* WifiConnection::status_name(int status)
         return "network fail";
     case CYW43_LINK_BADAUTH:
         return "bad auth";
+    default:
+        return "unknown";
     }
-    return "unknown";
 }

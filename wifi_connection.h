@@ -5,8 +5,10 @@ class WifiConnection
 {
 public:
     WifiConnection();
-    WifiConnection(const WifiConnection& rhs) = delete;
     WifiConnection(WifiConnection&& rhs) = delete;
+    WifiConnection(const WifiConnection& rhs) = delete;
+    WifiConnection& operator=(const WifiConnection& rhs) = delete;
+    WifiConnection& operator=(WifiConnection&& rhs) = delete;
     ~WifiConnection();
 
 private:

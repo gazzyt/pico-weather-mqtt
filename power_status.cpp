@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include "stdbool.h"
 #include "hardware/adc.h"
 #include "power_status.h"
 
@@ -17,7 +16,7 @@
 #endif
 
 // Pin used for ADC 0
-#define PICO_FIRST_ADC_PIN 26
+static constexpr unsigned int PICO_FIRST_ADC_PIN = 26;
 
 int power_source(bool *battery_powered) {
 #if defined CYW43_WL_GPIO_VBUS_PIN
@@ -70,7 +69,7 @@ int power_voltage(float *voltage_result) {
     cyw43_thread_exit();
 #endif
     // Generate voltage
-    const float conversion_factor = 3.3f / (1 << 12);
+    const float conversion_factor = 3.3F / (1U << 12U);
     *voltage_result = vsys * 3 * conversion_factor;
     return PICO_OK;
 #endif

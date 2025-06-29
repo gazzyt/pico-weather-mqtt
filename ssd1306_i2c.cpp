@@ -4,16 +4,13 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <memory>
-#include "pico/stdlib.h"
-#include "pico/binary_info.h"
 #include "hardware/i2c.h"
+#include "pico/binary_info.h"
+#include "pico/stdlib.h"
 #include "ssd1306_font.h"
 #include "ssd1306_i2c.h"
+#include <cstring>
+#include <memory>
 
 /* Example code to talk to an SSD1306-based OLED display
 
@@ -36,19 +33,7 @@
    GND (pin 38)  -> GND on display board
 */
 
-// Define the size of the display we have attached. This can vary, make sure you
-// have the right size defined or the output will look rather odd!
-// Code has been tested on 128x32 and 128x64 OLED displays
-#define SSD1306_HEIGHT              32
-#define SSD1306_WIDTH               128
-
 #define SSD1306_I2C_ADDR            _u(0x3C)
-
-// 400 is usual, but often these can be overclocked to improve display response.
-// Tested at 1000 on both 32 and 84 pixel height devices and it worked.
-#define SSD1306_I2C_CLK             400
-//#define SSD1306_I2C_CLK             1000
-
 
 // commands (see datasheet)
 #define SSD1306_SET_MEM_MODE        _u(0x20)
@@ -80,15 +65,25 @@
 
 #define SSD1306_NOP                 _u(0xE3)
 
-#define SSD1306_PAGE_HEIGHT         _u(8)
-#define SSD1306_NUM_PAGES           (SSD1306_HEIGHT / SSD1306_PAGE_HEIGHT)
-#define SSD1306_BUF_LEN             (SSD1306_NUM_PAGES * SSD1306_WIDTH)
-
 #define SSD1306_WRITE_MODE         _u(0xFE)
 #define SSD1306_READ_MODE          _u(0xFF)
 
 
+consteval uint8_t SSD1306I2C::get_pin_config(uint8_t height, uint8_t width)
+{
+    // 0x02 Works for 128x32, 0x12 Possibly works for 128x64. Other options 0x22, 0x32
+    if (width == 128 && height == 32)
+    {
+        return PIN_CFG_128_32;
+    }
 
+    if (width == 128 && height == 64)
+    {
+        return PIN_CFG_128_64;
+    }
+
+    return PIN_CFG_128_32;
+}
 
 void calc_render_area_buflen(struct render_area *area) {
     // calculate how long the flattened buffer will be for a render area
@@ -106,8 +101,9 @@ int SSD1306_send_cmd(uint8_t cmd) {
 }
 
 void SSD1306_send_cmd_list(uint8_t *buf, int num) {
-    for (int i=0;i<num;i++)
+    for (int i=0;i<num;i++) {
         SSD1306_send_cmd(buf[i]);
+    }
 }
 
 void SSD1306_send_buf(uint8_t buf[], int buflen) {
@@ -126,7 +122,9 @@ void SSD1306_send_buf(uint8_t buf[], int buflen) {
     i2c_write_blocking(i2c_default, SSD1306_I2C_ADDR, temp_buf.get(), buflen + 1, false);
 }
 
-void SSD1306_init() {
+void SSD1306I2C::SSD1306_init() {
+    static constexpr uint8_t PIN_CFG = get_pin_config(HEIGHT, WIDTH);
+
     // Some of these commands are not strictly necessary as the reset
     // process defaults to some of these but they are shown here
     // to demonstrate what the initialization sequence looks like
@@ -141,19 +139,12 @@ void SSD1306_init() {
         SSD1306_SET_DISP_START_LINE,    // set display start line to 0
         SSD1306_SET_SEG_REMAP | 0x01,   // set segment re-map, column address 127 is mapped to SEG0
         SSD1306_SET_MUX_RATIO,          // set multiplex ratio
-        SSD1306_HEIGHT - 1,             // Display height - 1
+        HEIGHT - 1,             // Display height - 1
         SSD1306_SET_COM_OUT_DIR | 0x08, // set COM (common) output scan direction. Scan from bottom up, COM[N-1] to COM0
         SSD1306_SET_DISP_OFFSET,        // set display offset
         0x00,                           // no offset
         SSD1306_SET_COM_PIN_CFG,        // set COM (common) pins hardware configuration. Board specific magic number.
-                                        // 0x02 Works for 128x32, 0x12 Possibly works for 128x64. Other options 0x22, 0x32
-#if ((SSD1306_WIDTH == 128) && (SSD1306_HEIGHT == 32))
-        0x02,
-#elif ((SSD1306_WIDTH == 128) && (SSD1306_HEIGHT == 64))
-        0x12,
-#else
-        0x02,
-#endif
+        PIN_CFG,
         /* timing and driving scheme */
         SSD1306_SET_DISP_CLK_DIV,       // set display clock divide ratio
         0x80,                           // div ratio of 1, standard freq
@@ -195,21 +186,26 @@ static inline int GetFontIndex(uint8_t ch) {
     if (ch >= 'A' && ch <='Z') {
         return  ch - 'A' + 1;
     }
-    else if (ch >= '0' && ch <='9') {
+    
+    if (ch >= '0' && ch <='9') {
         return  ch - '0' + 27;
     }
-    else if (ch == '.') {
+    
+    if (ch == '.') {
         return 37;
     }
-    else return  0; // Not got that char so space.
+    
+    return  0; // Not got that char so space.
 }
 
-static void WriteChar(uint8_t *buf, int16_t x, int16_t y, uint8_t ch) {
-    if (x > SSD1306_WIDTH - 8 || y > SSD1306_HEIGHT - 8)
+void SSD1306I2C::WriteChar(uint8_t *buf, int16_t x, int16_t y, uint8_t ch) {
+    if (x > WIDTH - 8 || y > HEIGHT - 8) {
         return;
+    }
 
     // For the moment, only write on Y row boundaries (every 8 vertical pixels)
-    y = y/8;
+    int16_t dd = 8;
+    y = y / dd;
 
     ch = toupper(ch);
     int idx = GetFontIndex(ch);
@@ -220,10 +216,11 @@ static void WriteChar(uint8_t *buf, int16_t x, int16_t y, uint8_t ch) {
     }
 }
 
-static void WriteString(uint8_t *buf, int16_t x, int16_t y, const char *str) {
+void SSD1306I2C::WriteString(uint8_t *buf, int16_t x, int16_t y, const char *str) {
     // Cull out any string off the screen
-    if (x > SSD1306_WIDTH - 8 || y > SSD1306_HEIGHT - 8)
+    if (x > WIDTH - 8 || y > HEIGHT - 8) {
         return;
+    }
 
     while (*str) {
         WriteChar(buf, x, y, *str++);

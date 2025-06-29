@@ -2,6 +2,7 @@
 #define LOGGER_H
 
 #include "hardware/timer.h"
+#include <array>
 #include <chrono>
 #include <format>
 #include <iostream>
@@ -24,8 +25,8 @@ public:
     {
         if (level >= log_level)
         {
-            std::chrono::milliseconds ms{time_us_64() / 1000};
-            std::string timestamp = std::format(" {0:%T} ", ms);
+            std::chrono::milliseconds elapsed_time{time_us_64() / 1000};
+            std::string timestamp = std::format(" {0:%T} ", elapsed_time);
             std::string message = std::format(format_string, std::forward<Args>(args)...);
             std::cout << level_names[level] << timestamp << message << std::endl;
         }
@@ -34,7 +35,7 @@ public:
 
 
 private:
-    static constexpr const char* level_names[] {"DBG", "INF", "WRN", "ERR"};
+    static constexpr std::array<const char*, 4> level_names {"DBG", "INF", "WRN", "ERR"};
 };
 
 template <typename ...Args>

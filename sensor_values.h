@@ -8,7 +8,7 @@ class SensorValues
 {
 public:
     SensorValues();
-    std::string to_json() const;
+    [[nodiscard]] std::string to_json() const;
 
 public:
     uint16_t cycle;

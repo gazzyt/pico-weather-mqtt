@@ -1,17 +1,12 @@
-#include <cassert>
 #include "lwip/dns.h"
 #include "logger.h"
 #include "mqtt_client.h"
 #include "pico/cyw43_arch.h"
+#include <cassert>
 
 MqttClient::MqttClient(std::string&& host, int port)
 :   _host{host},
     _port{port}
-{
-
-}
-
-MqttClient::~MqttClient()
 {
 
 }
@@ -69,10 +64,10 @@ void MqttClient::dns_lookup(MqttPublishContext& publishContext)
     
 }
 
-void MqttClient::dns_found_callback(const char *name, const ip_addr_t *ipaddr, void *callback_arg)
+void MqttClient::dns_found_callback([[maybe_unused]] const char *name, const ip_addr_t *ipaddr, void *callback_arg)
 {
     assert(callback_arg != nullptr);
-    MqttPublishContext* publishContext = reinterpret_cast<MqttPublishContext*>(callback_arg);
+    auto* publishContext = reinterpret_cast<MqttPublishContext*>(callback_arg);
 
     if (ipaddr == nullptr)
     {
@@ -86,9 +81,9 @@ void MqttClient::dns_found_callback(const char *name, const ip_addr_t *ipaddr, v
     publishContext->dns_lookup_done = true;
 }
 
-err_t MqttClient::mqtt_connect(MqttPublishContext& publishContext)
+err_t MqttClient::mqtt_connect(MqttPublishContext& publishContext) const
 {
-    mqtt_connect_client_info_t ci
+    mqtt_connect_client_info_t client_info
     {
         .client_id = "picow",
         .client_user = nullptr,
@@ -100,13 +95,13 @@ err_t MqttClient::mqtt_connect(MqttPublishContext& publishContext)
         .will_retain = 0
     };
 
-    return mqtt_client_connect(&publishContext.mqtt_client, &publishContext.host_address, _port, mqtt_connect_callback, &publishContext, &ci);
+    return mqtt_client_connect(&publishContext.mqtt_client, &publishContext.host_address, _port, mqtt_connect_callback, &publishContext, &client_info);
 }
 
-void MqttClient::mqtt_connect_callback(mqtt_client_t *client, void *callback_arg, mqtt_connection_status_t status)
+void MqttClient::mqtt_connect_callback([[maybe_unused]] mqtt_client_t *client, void *callback_arg, mqtt_connection_status_t status)
 {
     assert(callback_arg != nullptr);
-    MqttPublishContext* publishContext = reinterpret_cast<MqttPublishContext*>(callback_arg);
+    auto* publishContext = reinterpret_cast<MqttPublishContext*>(callback_arg);
 
     if (status == MQTT_CONNECT_ACCEPTED)
     {
@@ -129,7 +124,7 @@ void MqttClient::mqtt_connect_callback(mqtt_client_t *client, void *callback_arg
 void MqttClient::mqtt_publish_callback(void *callback_arg, err_t result)
 {
     assert(callback_arg != nullptr);
-    MqttPublishContext* publishContext = reinterpret_cast<MqttPublishContext*>(callback_arg);
+    auto* publishContext = reinterpret_cast<MqttPublishContext*>(callback_arg);
 
     if (result == ERR_OK)
     {

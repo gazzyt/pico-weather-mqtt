@@ -1,13 +1,9 @@
-#include <iomanip>
-#include <limits>
-#include <sstream>
-#include <stdio.h>
-#include "pico/stdlib.h"
 #include "hardware/adc.h"
 #include "hardware/i2c.h"
 #include "logger.h"
 #include "memory_status.h"
 #include "mqtt_client.h"
+#include "pico/stdlib.h"
 #include "power_status.h"
 #include "sensor/BME680.h"
 #include "sensor/BMP085.h"
@@ -18,14 +14,18 @@
 #include "ssd1306_i2c.h"
 #include "watchdog.h"
 #include "wifi_connection.h"
+#include <iomanip>
+#include <limits>
+#include <sstream>
 
 // I2C defines
 // This example will use I2C0 on GPIO8 (SDA) and GPIO9 (SCL) running at 400KHz.
 // Pins can be changed, see the GPIO function select table in the datasheet for information on GPIO assignments
-#define I2C_PORT i2c0
-#define I2C_SDA 4
-#define I2C_SCL 5
-#define GPIO_DHT_PIN 14
+static constexpr auto I2C_PORT = i2c0;
+static constexpr uint I2C_SDA = 4;
+static constexpr uint I2C_SCL = 5;
+static constexpr uint8_t GPIO_DHT_PIN = 14;
+static constexpr uint I2C_SPEED = 400 * 1000; // 400kHz
 
 VEML6070 veml6070;
 DHT dht(GPIO_DHT_PIN, DHT11);
@@ -65,7 +65,7 @@ int main()
     adc_init();
 
     // I2C Initialisation. Using it at 400Khz.
-    i2c_init(I2C_PORT, 400*1000);
+    i2c_init(I2C_PORT, I2C_SPEED);
     
     gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
     gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);

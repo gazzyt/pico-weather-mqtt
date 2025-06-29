@@ -1,8 +1,6 @@
 #ifndef MEMORY_STATUS_H
 #define MEMORY_STATUS_H
 
-#include <stdint.h>
-
 class MemoryStatus
 {
 public:
